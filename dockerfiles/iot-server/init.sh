@@ -16,12 +16,12 @@
 # ------------------------------------------------------------------------
 set -e
 
-# custom WSO2 non-root user and group variables
-user=wso2carbon
-group=wso2
+# volume mounts
+config_volume=${WORKING_DIRECTORY}/wso2-config-volume
+artifact_volume=${WORKING_DIRECTORY}/wso2-artifact-volume
 
-# file path variables
-volumes=${WORKING_DIRECTORY}/volumes
+# capture Docker container IP from the container's /etc/hosts file
+docker_container_ip=$(awk 'END{print $1}' /etc/hosts)
 
 # check if the WSO2 non-root user home exists
 test ! -d ${WORKING_DIRECTORY} && echo "WSO2 Docker non-root user home does not exist" && exit 1
@@ -29,12 +29,14 @@ test ! -d ${WORKING_DIRECTORY} && echo "WSO2 Docker non-root user home does not 
 # check if the WSO2 product home exists
 test ! -d ${WSO2_SERVER_HOME} && echo "WSO2 Docker product home does not exist" && exit 1
 
-# copy configuration changes and external libraries
+# copy any configuration changes mounted to config_volume
+test -d ${config_volume}/ && cp -RL ${config_volume}/* ${WSO2_SERVER_HOME}/
+# copy any artifact changes mounted to artifact_volume
+test -d ${artifact_volume}/ && cp -RL ${artifact_volume}/* ${WSO2_SERVER_HOME}/
 
-# check if any changed configuration files have been mounted
-# if any file changes have been mounted, copy the WSO2 configuration files recursively
-test -d ${volumes} && cp -r ${volumes}/* ${WSO2_SERVER_HOME}/
+# make any node specific configuration changes
+# for example, set the Docker container IP as the `localMemberHost` under axis2.xml clustering configurations (effective only when clustering is enabled)
+sed -i "s#<parameter\ name=\"localMemberHost\".*<\/parameter>#<parameter\ name=\"localMemberHost\">${docker_container_ip}<\/parameter>#" ${WSO2_SERVER_HOME}/conf/axis2/axis2.xml
 
-
-# start the WSO2 Carbon server profile
-sh ${WSO2_SERVER_HOME}/bin/iot-server.sh
+# start WSO2 Carbon server
+sh ${WSO2_SERVER_HOME}/bin/iot-server.sh "$@"
