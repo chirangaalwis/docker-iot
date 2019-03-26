@@ -18,7 +18,7 @@
 
 # set base Docker image to AdoptOpenJDK Ubuntu Docker image
 FROM adoptopenjdk/openjdk8:jdk8u192-b12
-MAINTAINER WSO2 Docker Maintainers "dev@wso2.org"
+LABEL maintainer="WSO2 Docker Maintainers <dev@wso2.org>"
 
 # set user configurations
 ARG USER=wso2carbon
@@ -65,6 +65,8 @@ RUN mkdir -p ${USER_HOME}/.java/.systemPrefs && \
 
 # copy wso2 product distribution to user's home directory
 COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK} ${WSO2_SERVER_HOME}
+# copy shared artifacts to a temporary location
+COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/repository/deployment/server/ ${USER_HOME}/wso2-tmp/server/
 # copy MySQL JDBC Connector to product distribution
 COPY --chown=wso2carbon:wso2 ${FILES}/mysql-connector-java-*-bin.jar ${WSO2_SERVER_HOME}/lib/
 # copy entrypoint bash script to user home
