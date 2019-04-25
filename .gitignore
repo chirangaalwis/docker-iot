@@ -23,5 +23,8 @@ hs_err_pid*
 rat.txt
 target/
 
+# exclude everything
 **/files/
+
+# exception to the rule
 !**/files/.gitkeep
